@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, abort, redirect
-import hashlib, json, random, validators
+import hashlib, json, random, validators, requests
+bad = [404, 410, 419, 423, 451]
 app = Flask(__name__)
 @app.route('/', methods = ['GET'])
 def index():
@@ -11,6 +12,11 @@ def newLink():
 	link = request.form.get('link')
 	if not validators.url(link):
 		return render_template('index.html', status='Invalid link (include http or https)')
+	try:
+		if requests.get(link, timeout = 10).status_code in bad:
+			return render_template('index.html', status="This link does not exist.")
+	except requests.exceptions.ReadTimeout:
+		return render_template('index.html', status = "Link has timed out")
 	with open('links.json', 'r+') as links:
 		data = json.load(links)
 		if link in data.values():
@@ -41,4 +47,5 @@ def link(goto):
 @app.errorhandler(404)
 def notfound(err):
 	return render_template('404.html')
-app.run(host='0.0.0.0', port=8080)
+if __name__ == '__main__':
+	app.run(host='0.0.0.0', port=8080)
