@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request, abort, redirect
 import hashlib, json, random, validators, requests
-bad = [404, 410, 419, 423, 451]
+bad = [400, 404, 410, 419, 423, 451]
 app = Flask(__name__)
 @app.route('/', methods = ['GET'])
 def index():
@@ -15,6 +15,8 @@ def newLink():
 	try:
 		if requests.get(link, timeout = 10).status_code in bad:
 			return render_template('index.html', status="This link does not exist.")
+	except requests.exceptions.ConnectionError:
+		return render_template('index.html', status="This link does not exist")
 	except requests.exceptions.ReadTimeout:
 		return render_template('index.html', status = "Link has timed out")
 	with open('links.json', 'r+') as links:
@@ -23,6 +25,7 @@ def newLink():
 			endoff = list(data.keys())[list(data.values()).index(link)]
 			return render_template('index.html', status='This link has already been created. It is: https://LinkShortener.efish.repl.co/' + endoff)
 		linkTemp = hashlib.sha256(link.encode('utf-8')).hexdigest()
+		print(linkTemp)
 		r = random.randint(0, len(linkTemp)-8)
 		linkNew = linkTemp[r:r+7]
 		while linkNew in data.keys():
