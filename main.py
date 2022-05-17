@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, abort
+from flask import Flask, render_template, request, abort, redirect
 import hashlib, json, random, validators
 app = Flask(__name__)
 @app.route('/', methods = ['GET'])
@@ -15,7 +15,7 @@ def newLink():
 		data = json.load(links)
 		if link in data.values():
 			endoff = list(data.keys())[list(data.values()).index(link)]
-			return render_template('index.html', status='This link has already been created. It is: https://LinkShortener.efish.repl.co/link/' + endoff)
+			return render_template('index.html', status='This link has already been created. It is: https://LinkShortener.efish.repl.co/' + endoff)
 		linkTemp = hashlib.sha256(link.encode('utf-8')).hexdigest()
 		r = random.randint(0, len(linkTemp)-8)
 		linkNew = linkTemp[r:r+7]
@@ -27,8 +27,8 @@ def newLink():
 		links.seek(0)
 		json.dump(data, links, indent=2)
 		links.truncate()
-		return render_template('index.html', status='Link created! Your link is: https://LinkShortener.efish.repl.co/link/'+linkNew)
-@app.route('/link/<goto>', methods = ['GET'])
+		return render_template('index.html', status='Link created! Your link is: https://LinkShortener.efish.repl.co/'+linkNew)
+@app.route('/<goto>', methods = ['GET'])
 def link(goto):
 	if not goto:
 		abort(404)
@@ -37,7 +37,7 @@ def link(goto):
 		if goto not in data.keys():
 			abort(404)
 		linkNew = data[goto]
-		return render_template('goto.html', linknew=str(linkNew))
+		return redirect(linkNew)
 @app.errorhandler(404)
 def notfound(err):
 	return render_template('404.html')
